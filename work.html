@@ -12,6 +12,7 @@
             --terminal-green: #00ff41;
             --btn-bg: rgba(30, 30, 30, 0.9);
             --btn-text: #fff;
+            --accent-blue: #007bff; /* Твой синий цвет */
         }
 
         body.light-mode {
@@ -63,20 +64,16 @@
             cursor: crosshair;
         }
 
-        /* Обложка */
         .cover { opacity: 1 !important; filter: none !important; margin-bottom: 150px !important; }
 
-        /* Ночной режим: Прозрачность + Реверс (инверсия) */
         .dark-page { 
             opacity: 0.1; 
             filter: invert(1) grayscale(1) contrast(1.4); 
         }
-        /* При КАСАНИИ: убираем прозрачность, оставляем РЕВЕРС */
         .dark-page:hover { 
             opacity: 1 !important; 
         }
 
-        /* Дневной режим: Обычные страницы */
         body.light-mode .dark-page {
             opacity: 0.8;
             filter: none;
@@ -85,12 +82,27 @@
             opacity: 1 !important;
         }
 
-        /* Кнопки */
+        /* Интерфейс */
+        .ui-element {
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        
+        .ui-hidden {
+            opacity: 0 !important;
+            visibility: hidden;
+        }
+
         #theme-toggle { position: fixed; bottom: 30px; left: 30px; padding: 12px 20px; background: var(--btn-bg); color: var(--btn-text); border: 1px solid rgba(128,128,128,0.3); border-radius: 50px; cursor: pointer; z-index: 10000; font-size: 10px; font-weight: bold; }
         #continue-btn { position: fixed; bottom: 30px; right: 30px; padding: 14px 24px; background: #fff; color: #000; border: none; border-radius: 50px; cursor: pointer; z-index: 20000; font-weight: bold; font-size: 11px; display: none; }
-        .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: var(--terminal-green); z-index: 14000; width: 0%; }
+        
+        /* СИНИЙ ПОЛЗУНОК */
+        .progress-bar { 
+            position: fixed; top: 0; left: 0; height: 3px; 
+            background: var(--accent-blue); 
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+            z-index: 14000; width: 0%; 
+        }
 
-        /* Футер / Титры */
         .credits { text-align: center; padding: 100px 20px 150px 20px; z-index: 1; line-height: 1.8; width: 100%; max-width: 600px; }
         .credits .role { font-size: 11px; color: #888; text-transform: uppercase; display: block; margin-top: 35px; letter-spacing: 2px; }
         .credits p { margin: 8px 0 0 0; font-size: 18px; color: var(--text-color); opacity: 0.9; }
@@ -109,13 +121,13 @@
     </div>
 
     <div id="main-wrapper">
-        <div class="progress-bar" id="myBar"></div>
+        <div class="progress-bar ui-element" id="myBar"></div>
         <div id="bg-1" class="bg-layer"></div>
         <div id="bg-2" class="bg-layer"></div>
         <div class="overlay"></div>
 
-        <button id="theme-toggle" onclick="toggleTheme()">РЕЖИМ: ДЕНЬ / НОЧЬ</button>
-        <button id="continue-btn" onclick="resumeReading()">ПРОДОЛЖИТЬ ↓</button>
+        <button id="theme-toggle" class="ui-element" onclick="toggleTheme()">РЕЖИМ: ДЕНЬ / НОЧЬ</button>
+        <button id="continue-btn" class="ui-element" onclick="resumeReading()">ПРОДОЛЖИТЬ ↓</button>
 
         <div class="container" id="main-content"></div>
 
@@ -147,7 +159,6 @@
         let currentLayerIndex = 0;
         let lastBgFile = "";
 
-        // --- ВОССТАНОВЛЕНЫ ВСЕ ЛОГИ ТЕРМИНАЛА ---
         const logs = [
             { t: "ПОДКЛЮЧЕНИЕ К ОБЪЕКТУ 'БАЙКАЛ'...", type: "system" },
             { t: "Сектор 9. Каюта уборщика. Анализ среды...", type: "line" },
@@ -168,21 +179,17 @@
                 const line = document.createElement('div');
                 line.className = 'log-line';
                 if (entry.type === 'error') {
-                    line.className += ' log-error';
-                    line.innerHTML = entry.t;
-                    screen.appendChild(line);
+                    line.className += ' log-error'; line.innerHTML = entry.t; screen.appendChild(line);
                     setTimeout(() => {
                         line.innerHTML = ">> RECOVERED: " + entry.fix;
-                        line.className = 'log-line log-success';
-                        logIdx++;
+                        line.className = 'log-line log-success'; logIdx++;
                         bar.style.width = (logIdx / logs.length * 100) + "%";
                         setTimeout(runTerminal, 500);
                     }, 1000);
                 } else {
                     line.innerHTML = entry.t;
                     if (entry.type === 'success') line.className += ' log-success';
-                    screen.appendChild(line);
-                    logIdx++;
+                    screen.appendChild(line); logIdx++;
                     bar.style.width = (logIdx / logs.length * 100) + "%";
                     setTimeout(runTerminal, 600);
                 }
@@ -204,17 +211,24 @@
             document.body.classList.toggle('light-mode');
         }
 
-        // Создание страниц
         for (let i = 1; i <= totalPages; i++) {
             const img = document.createElement('img');
             img.src = i + '.jpg'; 
             img.classList.add('page');
             if (i === 1) img.classList.add('cover');
             else img.classList.add('dark-page');
+
+            img.addEventListener('mouseenter', hideUI);
+            img.addEventListener('mouseleave', showUI);
+            img.addEventListener('touchstart', hideUI);
+            img.addEventListener('touchend', showUI);
+
             container.appendChild(img);
         }
 
-        // --- ВОССТАНОВЛЕНЫ ВСЕ УСЛОВИЯ ИЛЛЮСТРАЦИЙ ---
+        function hideUI() { document.querySelectorAll('.ui-element').forEach(el => el.classList.add('ui-hidden')); }
+        function showUI() { document.querySelectorAll('.ui-element').forEach(el => el.classList.remove('ui-hidden')); }
+
         function updateContent() {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
