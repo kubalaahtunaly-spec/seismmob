@@ -25,7 +25,7 @@
             margin: 0; padding: 0; 
             background-color: var(--bg-color); 
             color: var(--text-color); 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             min-height: 100vh; transition: background-color 0.5s;
             overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
@@ -38,14 +38,22 @@
             display: flex; justify-content: center; align-items: center;
             font-family: 'Courier New', Courier, monospace;
         }
-        .terminal { width: 85%; max-width: 600px; padding: 25px; border: 1px solid #004400; background: #000; box-shadow: 0 0 20px rgba(0,255,65,0.2); }
+        .terminal { 
+            width: 85%; max-width: 600px; padding: 25px; 
+            border: 1px solid #004400; background: #000; 
+            box-shadow: 0 0 20px rgba(0,255,65,0.2); 
+        }
         #log-screen { height: 300px; overflow-y: hidden; font-size: 13px; line-height: 1.6; margin-bottom: 20px; display: flex; flex-direction: column; justify-content: flex-end; }
         .log-line { margin: 2px 0; word-break: break-all; }
         .log-error { color: #ff4b4b; }
         .log-success { color: var(--terminal-green); }
         .terminal-progress-wrapper { width: 100%; height: 3px; background: #111; margin: 15px 0; }
         #terminal-bar { width: 0%; height: 100%; background: var(--terminal-green); transition: width 0.2s; }
-        #init-btn { display: none; width: 100%; padding: 15px; background: transparent; border: 1px solid var(--terminal-green); color: var(--terminal-green); cursor: pointer; text-transform: uppercase; font-weight: bold; letter-spacing: 2px; }
+        #init-btn { 
+            display: none; width: 100%; padding: 15px; background: transparent; 
+            border: 1px solid var(--terminal-green); color: var(--terminal-green); 
+            cursor: pointer; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;
+        }
 
         /* --- КОНТЕНТ --- */
         #main-wrapper { width: 100%; display: none; opacity: 0; transition: opacity 1.5s ease; flex-direction: column; align-items: center; }
@@ -63,10 +71,11 @@
         .page-active { opacity: 1 !important; }
 
         /* ИНТЕРФЕЙС */
-        .ui-element { transition: opacity 0.4s; }
+        .ui-element { transition: opacity 0.4s, visibility 0.4s; }
         .ui-hidden { opacity: 0 !important; visibility: hidden; }
-        #theme-toggle { position: fixed; bottom: 25px; left: 25px; padding: 12px 18px; background: var(--btn-bg); color: var(--btn-text); border: 1px solid rgba(128,128,128,0.3); border-radius: 50px; z-index: 10000; font-size: 10px; font-weight: bold; }
-        #continue-btn { position: fixed; bottom: 25px; right: 25px; padding: 12px 22px; background: #fff; color: #000; border: none; border-radius: 50px; z-index: 10000; font-weight: bold; font-size: 11px; display: none; }
+        
+        #theme-toggle { position: fixed; bottom: 25px; left: 25px; padding: 12px 18px; background: var(--btn-bg); color: var(--btn-text); border: 1px solid rgba(128,128,128,0.3); border-radius: 50px; z-index: 10000; font-size: 10px; font-weight: bold; cursor: pointer; }
+        #continue-btn { position: fixed; bottom: 25px; right: 25px; padding: 12px 22px; background: #fff; color: #000; border: none; border-radius: 50px; z-index: 10000; font-weight: bold; font-size: 11px; display: none; cursor: pointer; transition: opacity 0.4s; }
         .progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: var(--accent-blue); z-index: 14000; width: 0%; box-shadow: 0 0 10px rgba(0, 123, 255, 0.5); }
 
         /* ЦИТАТЫ И ТИТРЫ */
@@ -74,7 +83,7 @@
         .credits .role { font-size: 11px; color: #888; text-transform: uppercase; display: block; margin-top: 40px; letter-spacing: 2px; }
         .credits p { margin: 8px 0 0 0; font-size: 18px; color: var(--text-color); opacity: 0.9; }
         .quote-block { margin-top: 80px; font-size: 17px; font-style: italic; opacity: 0.8; line-height: 1.8; }
-        .final-phrase { margin-top: 80px; letter-spacing: 6px; font-size: 20px; text-transform: uppercase; font-weight: bold; color: #fff; }
+        .final-phrase { margin-top: 80px; letter-spacing: 6px; font-size: 20px; text-transform: uppercase; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -124,12 +133,13 @@
     <script>
         const totalPages = 114;
         const logs = [
-            { t: "CONNECTING TO OBJECT 'BAIKAL'...", type: "system" },
-            { t: "ERROR: 'MEMORY_OF_SHORE' CORRUPTED", type: "error", fix: "RECOVERED: varya_track.wav" },
+            { t: "CONNECTING TO ARCHIVE...", type: "system" },
+            { t: "ANALYZING SECTOR 9: CABIN", type: "line" },
+            { t: "ERROR: MEMORY_FRAGMENT_#042 CORRUPTED", type: "error", fix: "REPLACED BY varya_track.wav" },
             { t: "SYNCING SUBJECTS: FOMA & LINA", type: "line" },
-            { t: "PRESSURE LEAK IN SECTOR 9...", type: "error", fix: "STABILIZED" },
+            { t: "DECRYPTING VISUAL DATA...", type: "line" },
             { t: "Уу кистэлэҥэ суох...", type: "line" },
-            { t: "STREAM STABILIZED. ACCESS GRANTED.", type: "success" }
+            { t: "ACCESS GRANTED. STREAM STABILIZED.", type: "success" }
         ];
 
         let logIdx = 0;
@@ -147,7 +157,7 @@
                 function type() {
                     if (charIdx < text.length) {
                         line.innerHTML = text.substring(0, charIdx + 1) + "█";
-                        charIdx++; setTimeout(type, 30);
+                        charIdx++; setTimeout(type, 25);
                     } else {
                         line.innerHTML = text;
                         if (entry.type === 'error') {
@@ -162,7 +172,7 @@
                 }
                 function next() {
                     logIdx++; bar.style.width = (logIdx / logs.length * 100) + "%";
-                    setTimeout(runTerminal, 200);
+                    setTimeout(runTerminal, 150);
                 }
                 type();
             } else { document.getElementById('init-btn').style.display = "block"; }
@@ -204,7 +214,6 @@
             document.getElementById("myBar").style.width = (scrollTop / docHeight * 100) + "%";
             const p = Math.floor((scrollTop / (docHeight + 1)) * totalPages) + 1;
             
-            // --- ВОССТАНОВЛЕННЫЕ ИЛЛЮСТРАЦИИ ---
             let bgFile = "";
             if (p >= 110) bgFile = "end.webp";
             else if (p >= 105) bgFile = "star.webp";
@@ -238,7 +247,12 @@
 
         function resumeReading() {
             const s = localStorage.getItem('readerPosition');
-            if (s) window.scrollTo({ top: parseInt(s), behavior: 'smooth' });
+            if (s) {
+                window.scrollTo({ top: parseInt(s), behavior: 'smooth' });
+                const btn = document.getElementById('continue-btn');
+                btn.style.opacity = "0";
+                setTimeout(() => { btn.style.display = "none"; }, 400);
+            }
         }
 
         window.addEventListener('scroll', updateContent, {passive: true});
