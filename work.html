@@ -5,48 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Сейсмограф воды</title>
     <style>
-        body { margin: 0; padding: 0; background-color: #000; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        :root {
+            --bg-color: #000;
+            --text-color: #ccc;
+            --overlay-bg: rgba(0,0,0,0.6);
+            --btn-bg: rgba(30, 30, 30, 0.9);
+            --btn-text: #fff;
+        }
+
+        body.light-mode {
+            --bg-color: #f5f5f5;
+            --text-color: #1a1a1a;
+            --overlay-bg: rgba(255,255,255,0.1);
+            --btn-bg: rgba(255, 255, 255, 0.9);
+            --btn-text: #000;
+        }
+
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            font-family: sans-serif; 
+            display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; transition: background-color 0.5s;
+            overflow-x: hidden;
+        }
         
-        /* ФОНОВЫЕ СЛОИ */
-        .bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s ease-in-out; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: -1; }
+        /* ФОНОВЫЕ ИЛЛЮСТРАЦИИ (WebP) */
+        .bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.2s; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay-bg); z-index: -1; }
         
         .container { width: 100%; max-width: 850px; z-index: 1; padding: 10vh 0; }
         
-        /* СТРАНИЦЫ */
-        img.page { display: block; width: 100%; height: auto; margin-bottom: 100px; opacity: 0.55; transition: 0.4s; cursor: pointer; }
-        .cover { opacity: 1 !important; cursor: default !important; margin-bottom: 150px !important; }
-        .dark-page { filter: invert(1) hue-rotate(180deg) brightness(1.2); mix-blend-mode: screen; }
-        .page-active { opacity: 1 !important; }
+        /* СТРАНИЦЫ (JPG) */
+        img.page { 
+            display: block; width: 100%; height: auto; margin-bottom: 100px; 
+            opacity: 0.45; transition: opacity 0.5s; cursor: pointer; 
+        }
+        .cover { opacity: 1 !important; margin-bottom: 150px !important; }
+        
+        .dark-page { filter: invert(1) grayscale(1) contrast(1.4); }
+        body.light-mode img.page[src$=".jpg"] { filter: none !important; opacity: 0.75; }
+        .page-active, body.light-mode .page-active { opacity: 1 !important; }
         
         /* ИНТЕРФЕЙС */
-        .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #fff; z-index: 1000; width: 0%; }
+        .controls-top {
+            position: fixed; top: 0; left: 0; width: 100%; height: 45px;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 15000; background: rgba(0,0,0,0.1); backdrop-filter: blur(4px);
+            opacity: 0.3; transition: 0.3s;
+        }
+        .controls-top:hover { opacity: 1; background: rgba(0,0,0,0.8); }
+        .brightness-slider { width: 120px; height: 4px; cursor: pointer; margin-left: 15px; accent-color: #fff; }
+
+        .progress-bar { position: fixed; top: 45px; left: 0; height: 2px; background: #fff; z-index: 14000; width: 0%; }
+        body.light-mode .progress-bar { background: #000; }
+
+        /* КНОПКИ */
         #continue-btn { 
-            position: fixed; bottom: 30px; right: 30px; padding: 12px 20px; 
-            background: #fff; color: #000; border: none; border-radius: 12px; 
-            cursor: pointer; z-index: 2000; display: none; font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: fixed; bottom: 30px; right: 30px; 
+            padding: 14px 24px; background: #fff; color: #000; 
+            border: none; border-radius: 50px; cursor: pointer; z-index: 20000;
+            font-weight: bold; font-size: 11px; text-transform: uppercase; 
+            letter-spacing: 1px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none; transition: 0.4s;
         }
 
-        /* КОНЦОВКА */
+        #theme-toggle { 
+            position: fixed; bottom: 30px; left: 30px; 
+            padding: 10px 18px; background: var(--btn-bg); color: var(--btn-text); 
+            border: 1px solid rgba(128,128,128,0.3); border-radius: 8px; 
+            cursor: pointer; z-index: 10000; font-size: 10px; font-weight: bold;
+        }
+
+        /* КОНЦОВКА И ЦИТАТЫ */
         .credits { text-align: center; padding: 100px 20px 150px 20px; z-index: 1; line-height: 1.8; width: 100%; max-width: 600px; }
         .credits .role { font-size: 11px; color: #888; text-transform: uppercase; display: block; margin-top: 35px; letter-spacing: 2px; }
-        .credits p { margin: 8px 0 0 0; font-size: 18px; color: #ddd; }
+        .credits p { margin: 8px 0 0 0; font-size: 18px; color: var(--text-color); opacity: 0.9; }
+
+        .quote-block {
+            margin-top: 70px; font-size: 17px; font-style: italic; opacity: 0.8; 
+            max-width: 450px; margin-left: auto; margin-right: auto; line-height: 1.6; font-weight: 300;
+        }
+        .final-phrase { margin-top: 60px; letter-spacing: 5px; font-size: 18px; text-transform: uppercase; font-weight: bold; }
     </style>
 </head>
 <body>
+
+    <div class="controls-top">
+        <span style="font-size: 9px; color: #fff; letter-spacing: 1px;">ЯРКОСТЬ СТРАНИЦ</span>
+        <input type="range" id="brightRange" class="brightness-slider" min="0.4" max="1.6" step="0.05" value="1">
+    </div>
 
     <div class="progress-bar" id="myBar"></div>
     <div id="bg-1" class="bg-layer"></div>
     <div id="bg-2" class="bg-layer"></div>
     <div class="overlay"></div>
 
-    <button id="continue-btn" onclick="resumeReading()">ПРОДОЛЖИТЬ ЧТЕНИЕ</button>
+    <button id="theme-toggle" onclick="toggleTheme()">РЕЖИМ ТЕМЫ</button>
+    <button id="continue-btn" onclick="resumeReading()">ПРОДОЛЖИТЬ ЧТЕНИЕ ↓</button>
 
     <div class="container" id="main-content"></div>
 
     <div class="credits">
-   
         <div style="font-family: monospace; opacity: 0.4; margin-bottom: 40px; letter-spacing: 2px; font-size: 12px;">
             КОНЕЦ ПРОТОКОЛА // ОБЪЕКТ «БАЙКАЛ» — 2098
         </div>
@@ -60,13 +121,13 @@
         <span class="role">Визуальные воспоминания</span>
         <p>ChatGPT и стоковые архивы</p>
 
-        <p style="margin-top: 70px; font-size: 17px; font-style: italic; opacity: 0.8; max-width: 450px; margin-left: auto; margin-right: auto; line-height: 1.6; font-weight: 300;">
+        <div class="quote-block">
             "君の声を聴かせてよ ずっと" <br><br> 
             "Дай мне услышать твой голос... Всегда." <br>
             <span style="font-size: 14px; opacity: 0.7;">@ Sakanaction - Megaakuaiiro</span>
-        </p>
+        </div>
 
-        <div style="margin-top: 60px; color: #fff; letter-spacing: 5px; font-size: 18px; text-transform: uppercase; font-weight: bold;">
+        <div class="final-phrase">
             Мин харыстыы сылдьыам.
         </div>
     </div>
@@ -78,7 +139,22 @@
         let currentLayerIndex = 0;
         let lastBgFile = "";
 
-        // Создаем страницы от 1 до 114
+        // ЯРКОСТЬ
+        const brightSlider = document.getElementById('brightRange');
+        brightSlider.oninput = function() {
+            const val = this.value;
+            document.querySelectorAll('.dark-page').forEach(p => {
+                p.style.filter = `invert(1) grayscale(1) contrast(1.4) brightness(${val})`;
+            });
+            localStorage.setItem('userBrightness', val);
+        };
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+        }
+
+        // ГЕНЕРАЦИЯ СТРАНИЦ
         for (let i = 1; i <= totalPages; i++) {
             const img = document.createElement('img');
             img.src = i + '.jpg'; 
@@ -91,27 +167,24 @@
             container.appendChild(img);
         }
 
+        // ЛОГИКА СКРОЛЛА И ФОНОВ
         function updateContent() {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            if (docHeight <= 0) return;
-
-            const scrolled = (scrollTop / docHeight) * 100;
-            document.getElementById("myBar").style.width = scrolled + "%";
-
-            // Текущая страница
-            const p = Math.floor((scrollTop / (docHeight + 1)) * totalPages) + 1;
-
-            // Сохранение позиции
-            if (scrollTop > 400 && scrolled < 98) {
-                localStorage.setItem('readerPosition', scrollTop);
+            
+            if (docHeight > 0) {
+                document.getElementById("myBar").style.width = (scrollTop / docHeight * 100) + "%";
+                if (scrollTop > 600) {
+                    localStorage.setItem('readerPosition', Math.floor(scrollTop));
+                }
             }
 
-// ИСПРАВЛЕННАЯ ЛОГИКА ФОНОВ
+            const p = Math.floor((scrollTop / (docHeight + 1)) * totalPages) + 1;
+
+            // ВСЕ ИЛЛЮСТРАЦИИ (ВОССТАНОВЛЕНО)
             let bgFile = "";
-            
             if (p >= 110) bgFile = "end.webp";
-            else if (p >= 105 && p <= 109) bgFile = "star.webp"; // ДОБАВИЛ ЭТУ СТРОКУ
+            else if (p >= 105 && p <= 109) bgFile = "star.webp";
             else if (p >= 101 && p <= 104) bgFile = "cloud.webp";
             else if (p >= 99 && p <= 100) bgFile = "arbuz.webp";
             else if (p >= 90 && p <= 98) bgFile = "star.webp";
@@ -137,35 +210,41 @@
             else if (p >= 9 && p <= 12) bgFile = "komnata.png";
             else if (p >= 2 && p <= 8) bgFile = "ocean.webp";
 
-            // Смена фона
-            if (bgFile !== lastBgFile) {
+            if (bgFile && bgFile !== lastBgFile) {
                 const nextLayerIndex = 1 - currentLayerIndex;
-                if (bgFile) {
-                    bgLayers[nextLayerIndex].style.backgroundImage = "url('" + bgFile + "')";
-                    bgLayers[nextLayerIndex].style.opacity = "0.7";
-                    bgLayers[currentLayerIndex].style.opacity = "0";
-                    currentLayerIndex = nextLayerIndex;
-                } else {
-                    bgLayers.forEach(l => l.style.opacity = "0");
-                }
+                bgLayers[nextLayerIndex].style.backgroundImage = `url('${bgFile}')`;
+                bgLayers[nextLayerIndex].style.opacity = "0.7";
+                bgLayers[currentLayerIndex].style.opacity = "0";
+                currentLayerIndex = nextLayerIndex;
                 lastBgFile = bgFile;
             }
         }
 
         function resumeReading() {
             const saved = localStorage.getItem('readerPosition');
-            if (saved) window.scrollTo({ top: parseInt(saved), behavior: 'smooth' });
-            document.getElementById('continue-btn').style.opacity = "0";
-            setTimeout(() => { document.getElementById('continue-btn').style.display = "none"; }, 500);
+            if (saved) {
+                window.scrollTo({ top: parseInt(saved), behavior: 'smooth' });
+                document.getElementById('continue-btn').style.display = "none";
+            }
         }
 
         window.addEventListener('scroll', updateContent);
+
         window.onload = function() {
-            updateContent();
-            if (localStorage.getItem('readerPosition')) {
-                const btn = document.getElementById('continue-btn');
-                btn.style.display = "block";
+            if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
+            
+            const savedBright = localStorage.getItem('userBrightness');
+            if (savedBright) {
+                brightSlider.value = savedBright;
+                setTimeout(() => brightSlider.oninput(), 200);
             }
+
+            const savedPos = localStorage.getItem('readerPosition');
+            if (savedPos && parseInt(savedPos) > 600) {
+                document.getElementById('continue-btn').style.display = "block";
+            }
+            
+            updateContent();
         };
     </script>
 </body>
