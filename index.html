@@ -231,7 +231,7 @@
         }
 
         function scene6_logic() {
-            s6++; if(s6==1) document.getElementById('txt6').innerText = "(собирается надеть наушники=капли)";
+            s6++; if(s6==1) document.getElementById('txt6').innerText = "(собирается надеть наушники-капли)";
             else if(s6==2) { eyelids.style.opacity = "1"; setTimeout(() => { gul.pause(); voda.play(); go(7); eyelids.style.opacity = "0"; }, 1500); }
         }
 
