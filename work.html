@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Сейсмограф воды</title>
     <style>
         :root {
@@ -10,27 +10,25 @@
             --text-color: #ccc;
             --overlay-bg: rgba(0,0,0,0.7);
             --terminal-green: #00ff41;
-            --btn-bg: rgba(30, 30, 30, 0.9);
+            --btn-bg: rgba(30, 30, 30, 0.95);
             --btn-text: #fff;
-            --accent-blue: #007bff; /* Твой синий цвет */
+            --accent-blue: #007bff;
         }
 
         body.light-mode {
             --bg-color: #f5f5f5;
             --text-color: #1a1a1a;
             --overlay-bg: rgba(255,255,255,0.1);
-            --btn-bg: rgba(230, 230, 230, 0.9);
-            --btn-text: #000;
         }
 
         body { 
             margin: 0; padding: 0; 
             background-color: var(--bg-color); 
             color: var(--text-color); 
-            font-family: sans-serif; 
-            display: flex; flex-direction: column; align-items: center; 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
             min-height: 100vh; transition: background-color 0.5s;
             overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* --- ТЕРМИНАЛ ЗАГРУЗКИ --- */
@@ -40,74 +38,43 @@
             display: flex; justify-content: center; align-items: center;
             font-family: 'Courier New', Courier, monospace;
         }
-        .terminal { width: 90%; max-width: 600px; padding: 25px; border: 1px solid #004400; background: rgba(0, 5, 0, 0.98); box-shadow: 0 0 20px rgba(0, 255, 65, 0.1); }
+        .terminal { width: 85%; max-width: 600px; padding: 25px; border: 1px solid #004400; background: #000; box-shadow: 0 0 20px rgba(0,255,65,0.2); }
         #log-screen { height: 300px; overflow-y: hidden; font-size: 13px; line-height: 1.6; margin-bottom: 20px; display: flex; flex-direction: column; justify-content: flex-end; }
-        .log-line { margin: 2px 0; opacity: 0.9; }
-        .log-error { color: #ff4b4b; font-weight: bold; }
+        .log-line { margin: 2px 0; word-break: break-all; }
+        .log-error { color: #ff4b4b; }
         .log-success { color: var(--terminal-green); }
-        .terminal-progress-wrapper { width: 100%; height: 2px; background: #001100; margin: 15px 0; }
-        #terminal-bar { width: 0%; height: 100%; background: var(--terminal-green); transition: width 0.3s; }
-        #init-btn { display: none; width: 100%; padding: 15px; background: transparent; border: 1px solid var(--terminal-green); color: var(--terminal-green); cursor: pointer; letter-spacing: 2px; text-transform: uppercase; }
-        #init-btn:hover { background: var(--terminal-green); color: #000; }
+        .terminal-progress-wrapper { width: 100%; height: 3px; background: #111; margin: 15px 0; }
+        #terminal-bar { width: 0%; height: 100%; background: var(--terminal-green); transition: width 0.2s; }
+        #init-btn { display: none; width: 100%; padding: 15px; background: transparent; border: 1px solid var(--terminal-green); color: var(--terminal-green); cursor: pointer; text-transform: uppercase; font-weight: bold; letter-spacing: 2px; }
 
         /* --- КОНТЕНТ --- */
         #main-wrapper { width: 100%; display: none; opacity: 0; transition: opacity 1.5s ease; flex-direction: column; align-items: center; }
         .bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.2s; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay-bg); z-index: -1; }
-        .container { width: 100%; max-width: 850px; z-index: 1; padding: 10vh 0; }
+        .container { width: 92%; max-width: 850px; z-index: 1; padding: 8vh 0; }
 
-        /* --- ЛОГИКА СТРАНИЦ --- */
         img.page { 
             display: block; width: 100%; height: auto; 
-            margin-bottom: 100px; 
-            transition: opacity 0.5s ease; 
-            cursor: crosshair;
+            margin-bottom: 100px; transition: opacity 0.4s ease; 
+            touch-action: manipulation;
         }
-
         .cover { opacity: 1 !important; filter: none !important; margin-bottom: 150px !important; }
+        .dark-page { opacity: 0.1; filter: invert(1) grayscale(1) contrast(1.3); }
+        .page-active { opacity: 1 !important; }
 
-        .dark-page { 
-            opacity: 0.1; 
-            filter: invert(1) grayscale(1) contrast(1.4); 
-        }
-        .dark-page:hover { 
-            opacity: 1 !important; 
-        }
+        /* ИНТЕРФЕЙС */
+        .ui-element { transition: opacity 0.4s; }
+        .ui-hidden { opacity: 0 !important; visibility: hidden; }
+        #theme-toggle { position: fixed; bottom: 25px; left: 25px; padding: 12px 18px; background: var(--btn-bg); color: var(--btn-text); border: 1px solid rgba(128,128,128,0.3); border-radius: 50px; z-index: 10000; font-size: 10px; font-weight: bold; }
+        #continue-btn { position: fixed; bottom: 25px; right: 25px; padding: 12px 22px; background: #fff; color: #000; border: none; border-radius: 50px; z-index: 10000; font-weight: bold; font-size: 11px; display: none; }
+        .progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: var(--accent-blue); z-index: 14000; width: 0%; box-shadow: 0 0 10px rgba(0, 123, 255, 0.5); }
 
-        body.light-mode .dark-page {
-            opacity: 0.8;
-            filter: none;
-        }
-        body.light-mode .dark-page:hover {
-            opacity: 1 !important;
-        }
-
-        /* Интерфейс */
-        .ui-element {
-            transition: opacity 0.4s ease, visibility 0.4s ease;
-        }
-        
-        .ui-hidden {
-            opacity: 0 !important;
-            visibility: hidden;
-        }
-
-        #theme-toggle { position: fixed; bottom: 30px; left: 30px; padding: 12px 20px; background: var(--btn-bg); color: var(--btn-text); border: 1px solid rgba(128,128,128,0.3); border-radius: 50px; cursor: pointer; z-index: 10000; font-size: 10px; font-weight: bold; }
-        #continue-btn { position: fixed; bottom: 30px; right: 30px; padding: 14px 24px; background: #fff; color: #000; border: none; border-radius: 50px; cursor: pointer; z-index: 20000; font-weight: bold; font-size: 11px; display: none; }
-        
-        /* СИНИЙ ПОЛЗУНОК */
-        .progress-bar { 
-            position: fixed; top: 0; left: 0; height: 3px; 
-            background: var(--accent-blue); 
-            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
-            z-index: 14000; width: 0%; 
-        }
-
-        .credits { text-align: center; padding: 100px 20px 150px 20px; z-index: 1; line-height: 1.8; width: 100%; max-width: 600px; }
-        .credits .role { font-size: 11px; color: #888; text-transform: uppercase; display: block; margin-top: 35px; letter-spacing: 2px; }
+        /* ЦИТАТЫ И ТИТРЫ */
+        .credits { text-align: center; padding: 100px 20px 180px 20px; z-index: 1; line-height: 1.8; width: 100%; max-width: 600px; }
+        .credits .role { font-size: 11px; color: #888; text-transform: uppercase; display: block; margin-top: 40px; letter-spacing: 2px; }
         .credits p { margin: 8px 0 0 0; font-size: 18px; color: var(--text-color); opacity: 0.9; }
-        .quote-block { margin-top: 70px; font-size: 17px; font-style: italic; opacity: 0.8; max-width: 450px; margin-left: auto; margin-right: auto; line-height: 1.6; }
-        .final-phrase { margin-top: 60px; letter-spacing: 5px; font-size: 18px; text-transform: uppercase; font-weight: bold; }
+        .quote-block { margin-top: 80px; font-size: 17px; font-style: italic; opacity: 0.8; line-height: 1.8; }
+        .final-phrase { margin-top: 80px; letter-spacing: 6px; font-size: 20px; text-transform: uppercase; font-weight: bold; color: #fff; }
     </style>
 </head>
 <body>
@@ -132,20 +99,22 @@
         <div class="container" id="main-content"></div>
 
         <div class="credits">
-            <div style="font-family: monospace; opacity: 0.4; margin-bottom: 40px; letter-spacing: 2px; font-size: 12px;">
-                КОНЕЦ ПРОТОКОЛА // ОБЪЕКТ «БАЙКАЛ» — 2098
-            </div>
+            <div style="opacity: 0.3; margin-bottom: 50px; letter-spacing: 3px; font-size: 12px;">// КОНЕЦ ПРОТОКОЛА //</div>
+            
+            <span class="role">Объект</span>
+            <p>БАЙКАЛ — 2098</p>
+            
             <span class="role">Архивные данные</span>
             <p>Невольный свидетель</p>
+            
             <span class="role">Код</span>
-            <p>Gemini и невольный свидетель</p>
-            <span class="role">Визуальные воспоминания</span>
-            <p>ChatGPT и стоковые архивы</p>
+            <p>Gemini & Свидетель</p>
             
             <div class="quote-block">
-                "君の声を聴かせてよ ずっと" <br><br> 
+                "君の声を聴かせてよ ずっと" <br>
+                <span style="font-size: 14px; opacity: 0.6; font-style: normal;">(Kimi no koe o kikasete yo zutto)</span><br><br> 
                 "Дай мне услышать твой голос... Всегда." <br>
-                <span style="font-size: 14px; opacity: 0.7;">@ Sakanaction - Megaakuaiiro</span>
+                <span style="font-size: 13px; opacity: 0.5;">— Sakanaction (Megaakuaiiro)</span>
             </div>
             
             <div class="final-phrase">Мин харыстыы сылдьыам.</div>
@@ -154,20 +123,13 @@
 
     <script>
         const totalPages = 114;
-        const container = document.getElementById('main-content');
-        const bgLayers = [document.getElementById('bg-1'), document.getElementById('bg-2')];
-        let currentLayerIndex = 0;
-        let lastBgFile = "";
-
         const logs = [
-            { t: "ПОДКЛЮЧЕНИЕ К ОБЪЕКТУ 'БАЙКАЛ'...", type: "system" },
-            { t: "Сектор 9. Каюта уборщика. Анализ среды...", type: "line" },
-            { t: "ОШИБКА: ПОВРЕЖДЕН ФАЙЛ 'ПАМЯТЬ_О_БЕРЕГЕ'", type: "error", fix: "Заменено на: Шум дождя (varya_track)." },
-            { t: "Загрузка артефактов: фотохромные очки, швабра.", type: "line" },
-            { t: "Синхронизация: Фома (48), Лина (16).", type: "line" },
-            { t: "ОШИБКА: ДЕФЕКТ ИЛЛЮМИНАТОРА (ДАВЛЕНИЕ)", type: "error", fix: "Статус: Стабильно. Вода прибывает." },
+            { t: "CONNECTING TO OBJECT 'BAIKAL'...", type: "system" },
+            { t: "ERROR: 'MEMORY_OF_SHORE' CORRUPTED", type: "error", fix: "RECOVERED: varya_track.wav" },
+            { t: "SYNCING SUBJECTS: FOMA & LINA", type: "line" },
+            { t: "PRESSURE LEAK IN SECTOR 9...", type: "error", fix: "STABILIZED" },
             { t: "Уу кистэлэҥэ суох...", type: "line" },
-            { t: "Протокол 'Сейсмограф воды' готов.", type: "success" }
+            { t: "STREAM STABILIZED. ACCESS GRANTED.", type: "success" }
         ];
 
         let logIdx = 0;
@@ -178,22 +140,31 @@
                 const entry = logs[logIdx];
                 const line = document.createElement('div');
                 line.className = 'log-line';
-                if (entry.type === 'error') {
-                    line.className += ' log-error'; line.innerHTML = entry.t; screen.appendChild(line);
-                    setTimeout(() => {
-                        line.innerHTML = ">> RECOVERED: " + entry.fix;
-                        line.className = 'log-line log-success'; logIdx++;
-                        bar.style.width = (logIdx / logs.length * 100) + "%";
-                        setTimeout(runTerminal, 500);
-                    }, 1000);
-                } else {
-                    line.innerHTML = entry.t;
-                    if (entry.type === 'success') line.className += ' log-success';
-                    screen.appendChild(line); logIdx++;
-                    bar.style.width = (logIdx / logs.length * 100) + "%";
-                    setTimeout(runTerminal, 600);
+                if (entry.type === 'error') line.classList.add('log-error');
+                screen.appendChild(line);
+                let charIdx = 0;
+                let text = "> " + entry.t;
+                function type() {
+                    if (charIdx < text.length) {
+                        line.innerHTML = text.substring(0, charIdx + 1) + "█";
+                        charIdx++; setTimeout(type, 30);
+                    } else {
+                        line.innerHTML = text;
+                        if (entry.type === 'error') {
+                            setTimeout(() => { 
+                                line.innerHTML += " [FIXED]"; 
+                                line.className = 'log-line log-success'; 
+                                next(); 
+                            }, 500);
+                        } else { next(); }
+                    }
+                    screen.scrollTop = screen.scrollHeight;
                 }
-                screen.scrollTop = screen.scrollHeight;
+                function next() {
+                    logIdx++; bar.style.width = (logIdx / logs.length * 100) + "%";
+                    setTimeout(runTerminal, 200);
+                }
+                type();
             } else { document.getElementById('init-btn').style.display = "block"; }
         }
 
@@ -204,75 +175,64 @@
                 document.getElementById('main-wrapper').style.display = "flex";
                 setTimeout(() => document.getElementById('main-wrapper').style.opacity = "1", 50);
                 updateContent();
-            }, 1000);
+            }, 800);
         }
 
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-        }
+        function toggleTheme() { document.body.classList.toggle('light-mode'); }
+        function hideUI() { document.querySelectorAll('.ui-element').forEach(el => el.classList.add('ui-hidden')); }
+        function showUI() { document.querySelectorAll('.ui-element').forEach(el => el.classList.remove('ui-hidden')); }
 
+        const container = document.getElementById('main-content');
         for (let i = 1; i <= totalPages; i++) {
             const img = document.createElement('img');
-            img.src = i + '.jpg'; 
-            img.classList.add('page');
-            if (i === 1) img.classList.add('cover');
-            else img.classList.add('dark-page');
+            img.src = i + '.jpg'; img.classList.add('page');
+            if (i === 1) img.classList.add('cover'); else img.classList.add('dark-page');
 
-            img.addEventListener('mouseenter', hideUI);
-            img.addEventListener('mouseleave', showUI);
-            img.addEventListener('touchstart', hideUI);
-            img.addEventListener('touchend', showUI);
-
+            const act = () => { img.classList.add('page-active'); hideUI(); };
+            const dact = () => { img.classList.remove('page-active'); showUI(); };
+            img.addEventListener('mouseenter', act); img.addEventListener('mouseleave', dact);
+            img.addEventListener('touchstart', act, {passive: true}); img.addEventListener('touchend', dact, {passive: true});
             container.appendChild(img);
         }
 
-        function hideUI() { document.querySelectorAll('.ui-element').forEach(el => el.classList.add('ui-hidden')); }
-        function showUI() { document.querySelectorAll('.ui-element').forEach(el => el.classList.remove('ui-hidden')); }
+        const bgLayers = [document.getElementById('bg-1'), document.getElementById('bg-2')];
+        let currentLayerIndex = 0, lastBgFile = "";
 
         function updateContent() {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
             document.getElementById("myBar").style.width = (scrollTop / docHeight * 100) + "%";
-            
             const p = Math.floor((scrollTop / (docHeight + 1)) * totalPages) + 1;
             
+            // --- ВОССТАНОВЛЕННЫЕ ИЛЛЮСТРАЦИИ ---
             let bgFile = "";
             if (p >= 110) bgFile = "end.webp";
-            else if (p >= 105 && p <= 109) bgFile = "star.webp";
-            else if (p >= 101 && p <= 104) bgFile = "cloud.webp";
-            else if (p >= 99 && p <= 100) bgFile = "arbuz.webp";
-            else if (p >= 90 && p <= 98) bgFile = "star.webp";
-            else if (p >= 88 && p <= 89) bgFile = "fomaruka.webp";
-            else if (p >= 85 && p <= 87) bgFile = "zvezdi.webp";
-            else if (p >= 84) bgFile = "star.webp";
-            else if (p >= 80 && p <= 83) bgFile = "cloud.webp";
-            else if (p >= 78 && p <= 79) bgFile = "lampa.webp";
-            else if (p >= 75 && p <= 76) bgFile = "noch.webp";
-            else if (p >= 68 && p <= 74) bgFile = "cloud.webp";
-            else if (p >= 66 && p <= 67) bgFile = "cloud.webp";
-            else if (p >= 65 && p < 66) bgFile = "kafe.webp"; 
-            else if (p >= 64 && p < 65) bgFile = "varyaruka.webp";
-            else if (p >= 59 && p <= 63) bgFile = "kafe.webp";
-            else if (p >= 54 && p <= 58) bgFile = "gorod.webp";
-            else if (p >= 51 && p <= 53) bgFile = "cloud.webp";
-            else if (p >= 45 && p <= 47) bgFile = "obereg.webp";
-            else if (p >= 42 && p <= 43) bgFile = "svecha.webp";
-            else if (p >= 38 && p <= 39) bgFile = "kauta.webp";
-            else if (p >= 35 && p <= 37) bgFile = "nochnik.webp";
-            else if (p >= 26 && p <= 34) bgFile = "cloud.webp";
-            else if (p >= 20 && p <= 25) bgFile = "varya.webp";
-            else if (p >= 9 && p <= 12) bgFile = "komnata.png";
-            else if (p >= 2 && p <= 8) bgFile = "ocean.webp";
+            else if (p >= 105) bgFile = "star.webp";
+            else if (p >= 101) bgFile = "cloud.webp";
+            else if (p >= 99) bgFile = "arbuz.webp";
+            else if (p >= 90) bgFile = "star.webp";
+            else if (p >= 88) bgFile = "fomaruka.webp";
+            else if (p >= 85) bgFile = "zvezdi.webp";
+            else if (p >= 78) bgFile = "lampa.webp";
+            else if (p >= 75) bgFile = "noch.webp";
+            else if (p >= 64) bgFile = "varyaruka.webp";
+            else if (p >= 59) bgFile = "kafe.webp";
+            else if (p >= 54) bgFile = "gorod.webp";
+            else if (p >= 45) bgFile = "obereg.webp";
+            else if (p >= 42) bgFile = "svecha.webp";
+            else if (p >= 38) bgFile = "kauta.webp";
+            else if (p >= 35) bgFile = "nochnik.webp";
+            else if (p >= 20) bgFile = "varya.webp";
+            else if (p >= 9) bgFile = "komnata.png";
+            else if (p >= 2) bgFile = "ocean.webp";
 
             if (bgFile && bgFile !== lastBgFile) {
                 const n = 1 - currentLayerIndex;
                 bgLayers[n].style.backgroundImage = `url('${bgFile}')`;
-                bgLayers[n].style.opacity = "0.7";
+                bgLayers[n].style.opacity = "0.6";
                 bgLayers[currentLayerIndex].style.opacity = "0";
-                currentLayerIndex = n;
-                lastBgFile = bgFile;
+                currentLayerIndex = n; lastBgFile = bgFile;
             }
-
             if (scrollTop > 800) localStorage.setItem('readerPosition', Math.floor(scrollTop));
         }
 
@@ -281,11 +241,10 @@
             if (s) window.scrollTo({ top: parseInt(s), behavior: 'smooth' });
         }
 
-        window.addEventListener('scroll', updateContent);
-        window.onload = function() {
+        window.addEventListener('scroll', updateContent, {passive: true});
+        window.onload = () => {
             runTerminal();
-            const pos = localStorage.getItem('readerPosition');
-            if (pos && parseInt(pos) > 800) document.getElementById('continue-btn').style.display = "block";
+            if (localStorage.getItem('readerPosition') > 800) document.getElementById('continue-btn').style.display = "block";
         };
     </script>
 </body>
