@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Сейсмограф воды</title>
     <style>
         :root {
@@ -25,9 +25,9 @@
             margin: 0; padding: 0; 
             background-color: var(--bg-color); 
             color: var(--text-color); 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
             min-height: 100vh; transition: background-color 0.5s;
-            overflow-x: hidden;
+            overflow-x: auto;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -38,22 +38,13 @@
             display: flex; justify-content: center; align-items: center;
             font-family: 'Courier New', Courier, monospace;
         }
-        .terminal { 
-            width: 85%; max-width: 600px; padding: 25px; 
-            border: 1px solid #004400; background: #000; 
-            box-shadow: 0 0 20px rgba(0,255,65,0.2); 
-        }
+        .terminal { width: 85%; max-width: 600px; padding: 25px; border: 1px solid #004400; background: #000; box-shadow: 0 0 20px rgba(0,255,65,0.2); }
         #log-screen { height: 300px; overflow-y: hidden; font-size: 13px; line-height: 1.6; margin-bottom: 20px; display: flex; flex-direction: column; justify-content: flex-end; }
         .log-line { margin: 2px 0; word-break: break-all; }
         .log-error { color: #ff4b4b; }
         .log-success { color: var(--terminal-green); }
-        .terminal-progress-wrapper { width: 100%; height: 3px; background: #111; margin: 15px 0; }
-        #terminal-bar { width: 0%; height: 100%; background: var(--terminal-green); transition: width 0.2s; }
-        #init-btn { 
-            display: none; width: 100%; padding: 15px; background: transparent; 
-            border: 1px solid var(--terminal-green); color: var(--terminal-green); 
-            cursor: pointer; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;
-        }
+        #terminal-bar { width: 0%; height: 3px; background: var(--terminal-green); transition: width 0.2s; }
+        #init-btn { display: none; width: 100%; padding: 15px; background: transparent; border: 1px solid var(--terminal-green); color: var(--terminal-green); cursor: pointer; text-transform: uppercase; font-weight: bold; letter-spacing: 2px; }
 
         /* --- КОНТЕНТ --- */
         #main-wrapper { width: 100%; display: none; opacity: 0; transition: opacity 1.5s ease; flex-direction: column; align-items: center; }
@@ -61,71 +52,58 @@
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay-bg); z-index: -1; }
         .container { width: 92%; max-width: 850px; z-index: 1; padding: 8vh 0; }
 
+        /* СТРАНИЦЫ */
         img.page { 
             display: block; width: 100%; height: auto; 
-            margin-bottom: 100px; transition: opacity 0.4s ease; 
-            touch-action: manipulation;
+            margin-bottom: 100px; 
+            opacity: 0.15; 
+            transition: opacity 0.6s ease, filter 0.5s ease; 
         }
-        .cover { opacity: 1 !important; filter: none !important; margin-bottom: 150px !important; }
-        .dark-page { opacity: 0.1; filter: invert(1) grayscale(1) contrast(1.3); }
-        .page-active { opacity: 1 !important; }
+        
+        /* Негатив для всех страниц кроме первой в ночном режиме */
+        body:not(.light-mode) img.page:not(.cover) {
+            filter: invert(1) grayscale(1) contrast(1.2);
+        }
+
+        img.page.active { opacity: 1 !important; }
+        .cover { opacity: 1 !important; margin-bottom: 150px !important; }
 
         /* ИНТЕРФЕЙС */
-        .ui-element { transition: opacity 0.4s, visibility 0.4s; }
-        .ui-hidden { opacity: 0 !important; visibility: hidden; }
-        
         #theme-toggle { position: fixed; bottom: 25px; left: 25px; padding: 12px 18px; background: var(--btn-bg); color: var(--btn-text); border: 1px solid rgba(128,128,128,0.3); border-radius: 50px; z-index: 10000; font-size: 10px; font-weight: bold; cursor: pointer; }
-        #continue-btn { position: fixed; bottom: 25px; right: 25px; padding: 12px 22px; background: #fff; color: #000; border: none; border-radius: 50px; z-index: 10000; font-weight: bold; font-size: 11px; display: none; cursor: pointer; transition: opacity 0.4s; }
-        .progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: var(--accent-blue); z-index: 14000; width: 0%; box-shadow: 0 0 10px rgba(0, 123, 255, 0.5); }
+        #continue-btn { position: fixed; bottom: 25px; right: 25px; padding: 12px 22px; background: #fff; color: #000; border: none; border-radius: 50px; z-index: 10000; font-weight: bold; font-size: 11px; display: none; cursor: pointer; }
+        .progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: var(--accent-blue); z-index: 14000; width: 0%; }
 
-        /* ЦИТАТЫ И ТИТРЫ */
-        .credits { text-align: center; padding: 100px 20px 180px 20px; z-index: 1; line-height: 1.8; width: 100%; max-width: 600px; }
+        /* ТИТРЫ */
+        .credits { text-align: center; padding: 100px 20px 180px 20px; z-index: 1; }
         .credits .role { font-size: 11px; color: #888; text-transform: uppercase; display: block; margin-top: 40px; letter-spacing: 2px; }
-        .credits p { margin: 8px 0 0 0; font-size: 18px; color: var(--text-color); opacity: 0.9; }
-        .quote-block { margin-top: 80px; font-size: 17px; font-style: italic; opacity: 0.8; line-height: 1.8; }
+        .credits p { margin: 8px 0 0 0; font-size: 18px; color: var(--text-color); }
         .final-phrase { margin-top: 80px; letter-spacing: 6px; font-size: 20px; text-transform: uppercase; font-weight: bold; }
     </style>
 </head>
-<body>
-
-    <div id="memory-loader">
+<body class=""> <div id="memory-loader">
         <div class="terminal">
             <div id="log-screen"></div>
-            <div class="terminal-progress-wrapper"><div id="terminal-bar"></div></div>
+            <div id="terminal-bar"></div>
             <button id="init-btn" onclick="startReading()">ИНИЦИИРОВАТЬ ЧТЕНИЕ</button>
         </div>
     </div>
 
     <div id="main-wrapper">
-        <div class="progress-bar ui-element" id="myBar"></div>
+        <div class="progress-bar" id="myBar"></div>
         <div id="bg-1" class="bg-layer"></div>
         <div id="bg-2" class="bg-layer"></div>
         <div class="overlay"></div>
 
-        <button id="theme-toggle" class="ui-element" onclick="toggleTheme()">РЕЖИМ: ДЕНЬ / НОЧЬ</button>
-        <button id="continue-btn" class="ui-element" onclick="resumeReading()">ПРОДОЛЖИТЬ ↓</button>
+        <button id="theme-toggle" onclick="toggleTheme()">РЕЖИМ: ДЕНЬ / НОЧЬ</button>
+        <button id="continue-btn" onclick="resumeReading()">ПРОДОЛЖИТЬ ↓</button>
 
         <div class="container" id="main-content"></div>
 
         <div class="credits">
             <div style="opacity: 0.3; margin-bottom: 50px; letter-spacing: 3px; font-size: 12px;">// КОНЕЦ ПРОТОКОЛА //</div>
-            
-            <span class="role">Объект</span>
-            <p>БАЙКАЛ — 2098</p>
-            
-            <span class="role">Архивные данные</span>
-            <p>Невольный свидетель</p>
-            
-            <span class="role">Код</span>
-            <p>Gemini & Свидетель</p>
-            
-            <div class="quote-block">
-                "君の声を聴かせてよ ずっと" <br>
-                <span style="font-size: 14px; opacity: 0.6; font-style: normal;">(Kimi no koe o kikasete yo zutto)</span><br><br> 
-                "Дай мне услышать твой голос... Всегда." <br>
-                <span style="font-size: 13px; opacity: 0.5;">— Sakanaction (Megaakuaiiro)</span>
-            </div>
-            
+            <span class="role">Объект</span><p>БАЙКАЛ — 2098</p>
+            <span class="role">Архивные данные</span><p>Невольный свидетель</p>
+            <span class="role">Код</span><p>Gemini & Свидетель</p>
             <div class="final-phrase">Мин харыстыы сылдьыам.</div>
         </div>
     </div>
@@ -133,77 +111,68 @@
     <script>
         const totalPages = 114;
         const logs = [
-            { t: "CONNECTING TO ARCHIVE...", type: "system" },
-            { t: "ANALYZING SECTOR 9: CABIN", type: "line" },
-            { t: "ERROR: MEMORY_FRAGMENT_#042 CORRUPTED", type: "error", fix: "REPLACED BY varya_track.wav" },
+            { t: "CONNECTING TO OBJECT 'BAIKAL'...", type: "system" },
+            { t: "ERROR: 'MEMORY_OF_SHORE' CORRUPTED", type: "error" },
             { t: "SYNCING SUBJECTS: FOMA & LINA", type: "line" },
-            { t: "DECRYPTING VISUAL DATA...", type: "line" },
+            { t: "PRESSURE LEAK IN SECTOR 9...", type: "error" },
             { t: "Уу кистэлэҥэ суох...", type: "line" },
-            { t: "ACCESS GRANTED. STREAM STABILIZED.", type: "success" }
+            { t: "STREAM STABILIZED. ACCESS GRANTED.", type: "success" }
         ];
 
         let logIdx = 0;
         function runTerminal() {
             const screen = document.getElementById('log-screen');
-            const bar = document.getElementById('terminal-bar');
             if (logIdx < logs.length) {
                 const entry = logs[logIdx];
                 const line = document.createElement('div');
                 line.className = 'log-line';
                 if (entry.type === 'error') line.classList.add('log-error');
                 screen.appendChild(line);
-                let charIdx = 0;
+                
                 let text = "> " + entry.t;
-                function type() {
-                    if (charIdx < text.length) {
-                        line.innerHTML = text.substring(0, charIdx + 1) + "█";
-                        charIdx++; setTimeout(type, 25);
-                    } else {
-                        line.innerHTML = text;
-                        if (entry.type === 'error') {
-                            setTimeout(() => { 
-                                line.innerHTML += " [FIXED]"; 
-                                line.className = 'log-line log-success'; 
-                                next(); 
-                            }, 500);
-                        } else { next(); }
-                    }
-                    screen.scrollTop = screen.scrollHeight;
-                }
-                function next() {
-                    logIdx++; bar.style.width = (logIdx / logs.length * 100) + "%";
-                    setTimeout(runTerminal, 150);
-                }
-                type();
+                line.innerHTML = text;
+                
+                if (entry.type === 'error') {
+                    setTimeout(() => { 
+                        line.innerHTML += " [FIXED]"; 
+                        line.className = 'log-line log-success'; 
+                        next();
+                    }, 500);
+                } else { next(); }
             } else { document.getElementById('init-btn').style.display = "block"; }
         }
 
+        function next() {
+            logIdx++; 
+            document.getElementById('terminal-bar').style.width = (logIdx / logs.length * 100) + "%";
+            setTimeout(runTerminal, 400);
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('active');
+                else entry.target.classList.remove('active');
+            });
+        }, { threshold: 0.4 });
+
         function startReading() {
-            document.getElementById('memory-loader').style.opacity = "0";
-            setTimeout(() => {
-                document.getElementById('memory-loader').style.display = "none";
-                document.getElementById('main-wrapper').style.display = "flex";
-                setTimeout(() => document.getElementById('main-wrapper').style.opacity = "1", 50);
-                updateContent();
-            }, 800);
+            document.getElementById('memory-loader').style.display = "none";
+            document.getElementById('main-wrapper').style.display = "flex";
+            setTimeout(() => document.getElementById('main-wrapper').style.opacity = "1", 50);
+            
+            const container = document.getElementById('main-content');
+            for (let i = 1; i <= totalPages; i++) {
+                const img = document.createElement('img');
+                img.src = i + '.jpg';
+                img.classList.add('page');
+                if (i === 1) img.classList.add('cover');
+                container.appendChild(img);
+                observer.observe(img);
+            }
+            updateContent();
         }
 
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
-        function hideUI() { document.querySelectorAll('.ui-element').forEach(el => el.classList.add('ui-hidden')); }
-        function showUI() { document.querySelectorAll('.ui-element').forEach(el => el.classList.remove('ui-hidden')); }
-
-        const container = document.getElementById('main-content');
-        for (let i = 1; i <= totalPages; i++) {
-            const img = document.createElement('img');
-            img.src = i + '.jpg'; img.classList.add('page');
-            if (i === 1) img.classList.add('cover'); else img.classList.add('dark-page');
-
-            const act = () => { img.classList.add('page-active'); hideUI(); };
-            const dact = () => { img.classList.remove('page-active'); showUI(); };
-            img.addEventListener('mouseenter', act); img.addEventListener('mouseleave', dact);
-            img.addEventListener('touchstart', act, {passive: true}); img.addEventListener('touchend', dact, {passive: true});
-            container.appendChild(img);
-        }
 
         const bgLayers = [document.getElementById('bg-1'), document.getElementById('bg-2')];
         let currentLayerIndex = 0, lastBgFile = "";
@@ -212,33 +181,14 @@
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
             document.getElementById("myBar").style.width = (scrollTop / docHeight * 100) + "%";
-            const p = Math.floor((scrollTop / (docHeight + 1)) * totalPages) + 1;
             
-            let bgFile = "";
-            if (p >= 110) bgFile = "end.webp";
-            else if (p >= 105) bgFile = "star.webp";
-            else if (p >= 101) bgFile = "cloud.webp";
-            else if (p >= 99) bgFile = "arbuz.webp";
-            else if (p >= 90) bgFile = "star.webp";
-            else if (p >= 88) bgFile = "fomaruka.webp";
-            else if (p >= 85) bgFile = "zvezdi.webp";
-            else if (p >= 78) bgFile = "lampa.webp";
-            else if (p >= 75) bgFile = "noch.webp";
-            else if (p >= 64) bgFile = "varyaruka.webp";
-            else if (p >= 59) bgFile = "kafe.webp";
-            else if (p >= 54) bgFile = "gorod.webp";
-            else if (p >= 45) bgFile = "obereg.webp";
-            else if (p >= 42) bgFile = "svecha.webp";
-            else if (p >= 38) bgFile = "kauta.webp";
-            else if (p >= 35) bgFile = "nochnik.webp";
-            else if (p >= 20) bgFile = "varya.webp";
-            else if (p >= 9) bgFile = "komnata.png";
-            else if (p >= 2) bgFile = "ocean.webp";
+            const p = Math.floor((scrollTop / (docHeight + 1)) * totalPages) + 1;
+            let bgFile = (p >= 110) ? "end.webp" : (p >= 9) ? "komnata.png" : (p >= 2) ? "ocean.webp" : "";
 
             if (bgFile && bgFile !== lastBgFile) {
                 const n = 1 - currentLayerIndex;
                 bgLayers[n].style.backgroundImage = `url('${bgFile}')`;
-                bgLayers[n].style.opacity = "0.6";
+                bgLayers[n].style.opacity = "0.4";
                 bgLayers[currentLayerIndex].style.opacity = "0";
                 currentLayerIndex = n; lastBgFile = bgFile;
             }
@@ -251,14 +201,16 @@
                 window.scrollTo({ top: parseInt(s), behavior: 'smooth' });
                 const btn = document.getElementById('continue-btn');
                 btn.style.opacity = "0";
-                setTimeout(() => { btn.style.display = "none"; }, 400);
+                setTimeout(() => btn.style.display = "none", 400);
             }
         }
 
         window.addEventListener('scroll', updateContent, {passive: true});
         window.onload = () => {
             runTerminal();
-            if (localStorage.getItem('readerPosition') > 800) document.getElementById('continue-btn').style.display = "block";
+            if (parseInt(localStorage.getItem('readerPosition')) > 800) {
+                document.getElementById('continue-btn').style.display = "block";
+            }
         };
     </script>
 </body>
