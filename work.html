@@ -99,24 +99,35 @@
 
         <div class="container" id="main-content"></div>
 
-        <div class="credits">
-            <div style="opacity: 0.3; margin-bottom: 50px; letter-spacing: 3px; font-size: 12px;">// КОНЕЦ ПРОТОКОЛА //</div>
-            <span class="role">Объект</span><p>БАЙКАЛ — 2098</p>
-            <span class="role">Архивные данные</span><p>Невольный свидетель</p>
-            <span class="role">Код</span><p>Gemini & Свидетель</p>
-            <div class="final-phrase">Мин харыстыы сылдьыам.</div>
-        </div>
+         <div class="credits">
+            <div style="font-family: monospace; opacity: 0.4; margin-bottom: 40px; letter-spacing: 2px; font-size: 12px;">
+                КОНЕЦ ПРОТОКОЛА // ОБЪЕКТ «БАЙКАЛ» — 2098
+            </div>
+            <span class="role">Архивные данные</span>
+            <p>Невольный свидетель</p>
+            <span class="role">Код</span>
+            <p>Gemini и невольный свидетель</p>
+            <span class="role">Визуальные воспоминания</span>
+            <p>ChatGPT и стоковые архивы</p>
+            <p style="margin-top: 70px; font-size: 17px; font-style: italic; opacity: 0.8; max-width: 450px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+                "君の声を聴かせてよ ずっと" <br><br> 
+                "Дай мне услышать твой голос... Всегда." <br>
+                <span style="font-size: 14px; opacity: 0.7;">@ Sakanaction - Megaakuaiiro</span>
+            </p>
+            <div style="margin-top: 60px; color: #fff; letter-spacing: 5px; font-size: 18px; text-transform: uppercase; font-weight: bold;">
+                Мин харыстыы сылдьыам.
+            </div>
     </div>
 
     <script>
         const totalPages = 114;
         const logs = [
-            { t: "CONNECTING TO OBJECT 'BAIKAL'...", type: "system" },
-            { t: "ERROR: 'MEMORY_OF_SHORE' CORRUPTED", type: "error" },
-            { t: "SYNCING SUBJECTS: FOMA & LINA", type: "line" },
-            { t: "PRESSURE LEAK IN SECTOR 9...", type: "error" },
-            { t: "Уу кистэлэҥэ суох...", type: "line" },
-            { t: "STREAM STABILIZED. ACCESS GRANTED.", type: "success" }
+         { t: "ПОДКЛЮЧЕНИЕ К АРХИВАМ ОБЪЕКТА 'БАЙКАЛ'...", type: "system" },
+            { t: "Синхронизация потоков данных...", type: "line" },
+            { t: "ОШИБКА: ПОВРЕЖДЕН ФАЙЛ 'МИН_ХАРЫСТЫЫ_СЫЛДЬЫАМ'", type: "error", fix: "Сектор восстановлен." },
+            { t: "Загрузка визуальных воспоминаний (WebP)...", type: "line" },
+            { t: "ОШИБКА: НИЗКОЕ ДАВЛЕНИЕ В СЕКТОРЕ 7", type: "error", fix: "Иллюминаторы заблокированы." },
+            { t: "Уу кистэлэҥэ суох. Протокол бэлэм.", type: "success" }
         ];
 
         let logIdx = 0;
